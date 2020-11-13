@@ -9,7 +9,7 @@ The implementation follows the code of the [R bioconductor package illuminaio](h
 
 ## Currently supported files
 
-This is an early stage and only the following files are supported:
+This is package is in an early stage and only the following files are supported:
 * Illumina Human Methylation Epic
 
 
