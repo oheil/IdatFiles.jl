@@ -76,5 +76,11 @@ mutable struct Idat
     codeVersion::Array{String,1}
 end
 ```
-
+Where the most important members are
+```
+data.illuminaID
+data.sd
+data.mean
+data.nbeads
+```
 
