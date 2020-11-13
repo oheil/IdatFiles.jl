@@ -29,7 +29,7 @@ This is an early stage and only the following files are supported:
 
 * none
 
-## Usage examples
+## Usage
 
 #### General usage
 ```julia
