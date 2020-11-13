@@ -1,5 +1,7 @@
 module IdatFiles
 
+export idat_read
+
 function read_string(io)
 	bytes=0
 	m=read(io, UInt8)
