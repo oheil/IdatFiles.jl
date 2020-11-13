@@ -40,7 +40,40 @@ To read an illumina idat file use the following command:
 ```julia
 idat=idat_read(filename)
 ```
-
-
+Example:
+```julia
+filename=raw"c:\temp\idat\204792200130_R01C01_Grn.idat"
+data=idat_read(filename)
+```
+The returned `data` is a struct of type `IdatFiles.Idat`:
+```julia
+mutable struct Idat
+    nSNPsRead::Int32
+    illuminaID::Array{Int,1}
+    sd::Array{Int,1}
+    mean::Array{Int,1}
+    nbeads::Array{Int,1}
+    nMidBlockEntries::Int32
+    midBlock::Array{Int32,1}
+    redGreen::Int32
+    mostlyNull::String
+    barcode::String
+    chipType::String
+    mostlyA::String
+    unknown1::String
+    unknown2::String
+    unknown3::String
+    unknown4::String
+    unknown5::String
+    unknown6::String
+    unknown7::String
+    nRunInfoBlocks::Int32
+    runTime::Array{String,1}
+    blockType::Array{String,1}
+    blockPars::Array{String,1}
+    blockCode::Array{String,1}
+    codeVersion::Array{String,1}
+end
+```
 
 
