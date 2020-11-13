@@ -33,7 +33,8 @@ This is package is in an early stage and only the following files are supported:
 
 #### General usage
 ```julia
-Pkg.add("IdatFiles");
+#Pkg.add("IdatFiles");
+Pkg.add("https://github.com/oheil/IdatFiles.jl#master")
 using IdatFiles;
 ```
 To read an illumina idat file use the following command:
