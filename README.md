@@ -11,6 +11,7 @@ The implementation follows the code of the [R bioconductor package illuminaio](h
 
 This is an early stage and only the following files are supported:
 * Illumina Human Methylation Epic
+
   e.g. 204792200130_R01C01_Grn.idat, 204792200130_R01C01_Red.idat
 
 ## Dependencies
