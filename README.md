@@ -1,4 +1,4 @@
-# IdatFiles
+# IlluminaIdatFiles
 
 This is a low level IO package for Illumina .idat files
 
