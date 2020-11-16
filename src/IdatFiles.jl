@@ -1,4 +1,4 @@
-module IdatFiles
+module IlluminaIdatFiles
 
 export idat_read
 
