@@ -33,9 +33,9 @@ This package is in an early stage and only the following files are supported:
 
 #### General usage
 ```julia
-#Pkg.add("IdatFiles");
-Pkg.add("https://github.com/oheil/IdatFiles.jl#master")
-using IdatFiles;
+#Pkg.add("IlluminaIdatFiles");
+Pkg.add("https://github.com/oheil/IlluminaIdatFiles.jl#master")
+using IlluminaIdatFiles;
 ```
 To read an illumina idat file use the following command:
 ```julia
@@ -46,7 +46,7 @@ Example:
 filename=raw"c:\temp\idat\204792200130_R01C01_Grn.idat"
 data=idat_read(filename)
 ```
-The returned `data` is a struct of type `IdatFiles.Idat`:
+The returned `data` is a struct of type `IlluminaIdatFiles.Idat`:
 ```julia
 mutable struct Idat
     nSNPsRead::Int32
