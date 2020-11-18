@@ -13,8 +13,7 @@ This package is in an early stage and only the following microarrays .idat files
 * Illumina Infinium MethylationEPIC BeadChip
 * Illumina Infinium Human Methylation 450K BeadChip
 
-
-  e.g. 204792200130_R01C01_Grn.idat, 204792200130_R01C01_Red.idat
+e.g. 204792200130_R01C01_Grn.idat, 204792200130_R01C01_Red.idat
 
 ## Dependencies
 
@@ -62,6 +61,17 @@ using GZip
 data = GZip.open("204792200130_R01C01_Red.idat.gz") |> idat_read
 ```
 
+```julia
+using TranscodingStreams, CodecZlib
+stream = GzipDecompressorStream(open("204792200130_R01C01_Red.idat.gz"))
+data = idat_read(stream)
+close(stream)
+```
+
+```julia
+using TranscodingStreams, CodecZlib
+data = GzipDecompressorStream(open("204792200130_R01C01_Red.idat.gz")) |> idat_read
+```
 
 The returned `data` is a struct of type `IlluminaIdatFiles.Idat`:
 ```julia

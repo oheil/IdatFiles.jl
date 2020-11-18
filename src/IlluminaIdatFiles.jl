@@ -72,6 +72,17 @@ mutable struct Idat
     codeVersion::Array{String,1}
 end
 
+function idat_seek(io::IO, nextPosition::Int)
+	try
+		seek(io,nextPosition)
+	catch
+		#if seek failes, try to read und discard nextPosition bytes
+		@warn "seek failed for stream of type "*string(typeof(io))*", trying to read and discard with performance regression"
+		seekstart(io)
+		read(io, nextPosition)
+	end
+end
+
 function idat_read(io::IO)
 	seekstart(io)
 	b=Array{UInt8,1}(undef,4)
@@ -102,7 +113,7 @@ function idat_read(io::IO)
 	end
 
 	nextPosition=byteOffsets[nSNPsReadIndex]
-	seek(io,nextPosition)
+	idat_seek(io,nextPosition)
 	nSNPsRead = read(io,Int32)
 	nextPosition+=4
 
@@ -145,7 +156,7 @@ function idat_read(io::IO)
 				nextPosition+=step
 			end
 			if step<0
-				seek(io,offset)
+				idat_seek(io,offset)
 				nextPosition=offset
 			end
 			if codes[index]=="IlluminaID"
