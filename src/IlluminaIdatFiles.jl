@@ -72,9 +72,7 @@ mutable struct Idat
     codeVersion::Array{String,1}
 end
 
-function idat_read(file)
-	io=open(file,"r")
-
+function idat_read(io::IO)
 	seekstart(io)
 	b=Array{UInt8,1}(undef,4)
 	readbytes!(io, b,length(b))
@@ -237,6 +235,12 @@ function idat_read(file)
 			end
 		end
 	end
+	idat
+end
+
+function idat_read(file::AbstractString)
+	io=open(file,"r")
+	idat=idat_read(io)
 	close(io)
 	idat
 end

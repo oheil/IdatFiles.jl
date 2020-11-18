@@ -9,8 +9,9 @@ The implementation follows the code of the [R bioconductor package illuminaio](h
 
 ## Currently supported files
 
-This package is in an early stage and only the following files are supported:
-* Illumina Human Methylation Epic
+This package is in an early stage and only the following microarrays .idat files are supported:
+* Illumina Infinium MethylationEPIC BeadChip
+* Illumina Infinium Human Methylation 450K BeadChip
 
 
   e.g. 204792200130_R01C01_Grn.idat, 204792200130_R01C01_Red.idat
@@ -36,17 +37,32 @@ This package is in an early stage and only the following files are supported:
 #Pkg.add("IlluminaIdatFiles");
 using Pkg
 Pkg.add(url="https://github.com/oheil/IlluminaIdatFiles.jl",rev="master")
-using IlluminaIdatFiles;
+
+using IlluminaIdatFiles
 ```
 To read an illumina idat file use the following command:
 ```julia
 idat=idat_read(filename)
 ```
-Example:
+Examples:
 ```julia
 filename=raw"c:\temp\idat\204792200130_R01C01_Grn.idat"
 data=idat_read(filename)
 ```
+
+```julia
+using GZip
+fh = GZip.open("204792200130_R01C01_Red.idat.gz")
+data=idat_read(fh)
+close(fh)
+```
+
+```julia
+using GZip
+data = GZip.open("204792200130_R01C01_Red.idat.gz") |> idat_read
+```
+
+
 The returned `data` is a struct of type `IlluminaIdatFiles.Idat`:
 ```julia
 mutable struct Idat
