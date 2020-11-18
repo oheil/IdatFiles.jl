@@ -34,7 +34,8 @@ This package is in an early stage and only the following files are supported:
 #### General usage
 ```julia
 #Pkg.add("IlluminaIdatFiles");
-Pkg.add("https://github.com/oheil/IlluminaIdatFiles.jl#master")
+using Pkg
+Pkg.add(url="https://github.com/oheil/IlluminaIdatFiles.jl",rev="master")
 using IlluminaIdatFiles;
 ```
 To read an illumina idat file use the following command:
