@@ -1,6 +1,8 @@
 
 module IlluminaIdatFiles
 
+include("decrypt_des.jl")
+
 export idat_read
 
 function read_string(io)
@@ -69,7 +71,36 @@ mutable struct Idat
     blockType::Array{String,1}
     blockPars::Array{String,1}
     blockCode::Array{String,1}
-    codeVersion::Array{String,1}
+	codeVersion::Array{String,1}
+	function Idat(nSNPsRead=0)
+		new(
+			nSNPsRead,
+			Array{Int,1}(undef,nSNPsRead),
+			Array{Int,1}(undef,nSNPsRead),
+			Array{Int,1}(undef,nSNPsRead),
+			Array{Int,1}(undef,nSNPsRead),
+			-1,
+			Array{Int32,1}(undef,0),
+			-1,
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			-1,
+			Array{String,1}(undef,0),
+			Array{String,1}(undef,0),
+			Array{String,1}(undef,0),
+			Array{String,1}(undef,0),
+			Array{String,1}(undef,0)	
+		)
+	end
 end
 
 function idat_seek(io::IO, nextPosition::Int)
@@ -83,13 +114,54 @@ function idat_seek(io::IO, nextPosition::Int)
 	end
 end
 
-function idat_read(io::IO)
+function idat_read(file::AbstractString)
+	io=open(file,"r")
+	idat=idat_read(io)
+	close(io)
+	idat
+end
+
+function idat_read(io::IO)::Idat
 	seekstart(io)
 	b=Array{UInt8,1}(undef,4)
 	readbytes!(io, b,length(b))
 	magic=join(Array{Char}(b))
+	
+	if magic != "IDAT"
+		@warn "magic bytes don't match 'IDAT'"
+	end
 
-	version=read(io,Int64)
+	version=read(io,Int32)
+	if version == 3
+		skip(io,4)
+		return idat_read_v3(io::IO)
+	end
+	if version == 1
+		return idat_read_v1(io::IO)
+	end
+	
+	@warn "version "*string(version)*" is unknown"
+	return Idat()
+end
+
+function idat_read_v1(io::IO)
+	#idatKey=Array{Int8}([127, 10, 73, -115, -47, -40, 25, -85])
+	idatKey=Array{UInt8,1}([0x7f, 0x0a, 0x49, 0x8d, 0xd1, 0xd8, 0x19, 0xab])
+
+	sessionKey=Array{UInt8,1}(undef,8)
+	readbytes!(io, sessionKey,length(sessionKey))
+
+	context1=Gl_des_ctx()
+	gl_des_setkey!(context1,idatKey)
+
+
+
+
+	
+
+end
+
+function idat_read_v3(io::IO)
 	nfields=read(io,Int32)
 
 	codes=Array{String,1}(undef,nfields)
@@ -104,7 +176,7 @@ function idat_read(io::IO)
 		if haskey(knownCodes,fieldCodes[index])
 			codes[index]=knownCodes[fieldCodes[index]]
 		else
-			codes[index]="newField"*nNewField
+			codes[index]="newField"*string(nNewField)
 			nNewField+=1
 		end
 		if knownCodes[fieldCodes[index]]=="nSNPsRead"
@@ -117,33 +189,7 @@ function idat_read(io::IO)
 	nSNPsRead = read(io,Int32)
 	nextPosition+=4
 
-	idat=Idat(
-		nSNPsRead,
-		Array{Int,1}(undef,nSNPsRead),
-		Array{Int,1}(undef,nSNPsRead),
-		Array{Int,1}(undef,nSNPsRead),
-		Array{Int,1}(undef,nSNPsRead),
-		-1,
-		Array{Int32,1}(undef,0),
-		-1,
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		-1,
-		Array{String,1}(undef,0),
-		Array{String,1}(undef,0),
-		Array{String,1}(undef,0),
-		Array{String,1}(undef,0),
-		Array{String,1}(undef,0)
-	)
+	idat=Idat(nSNPsRead)
 
 	sortedOffsets=sortperm(byteOffsets)
 	for index in sortedOffsets
@@ -246,13 +292,6 @@ function idat_read(io::IO)
 			end
 		end
 	end
-	idat
-end
-
-function idat_read(file::AbstractString)
-	io=open(file,"r")
-	idat=idat_read(io)
-	close(io)
 	idat
 end
 
