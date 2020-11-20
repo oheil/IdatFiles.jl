@@ -123,7 +123,8 @@ end
 
 function idat_read(io::IO)::Idat
 	seekstart(io)
-	b=Array{UInt8,1}(undef,4)
+	#b=Array{UInt8,1}(undef,4)
+	b=zeros(UInt8,4)
 	readbytes!(io, b,length(b))
 	magic=join(Array{Char}(b))
 	
@@ -137,6 +138,7 @@ function idat_read(io::IO)::Idat
 		return idat_read_v3(io::IO)
 	end
 	if version == 1
+		skip(io,1)
 		return idat_read_v1(io::IO)
 	end
 	
@@ -148,16 +150,29 @@ function idat_read_v1(io::IO)
 	#idatKey=Array{Int8}([127, 10, 73, -115, -47, -40, 25, -85])
 	idatKey=Array{UInt8,1}([0x7f, 0x0a, 0x49, 0x8d, 0xd1, 0xd8, 0x19, 0xab])
 
-	sessionKey=Array{UInt8,1}(undef,8)
+	#sessionKey=Array{UInt8,1}(undef,8)
+	sessionKey=zeros(UInt8,8)
 	readbytes!(io, sessionKey,length(sessionKey))
 
 	context1=Gl_des_ctx()
 	gl_des_setkey!(context1,idatKey)
+	decrypted_sessionKey=zeros(UInt8,8)
+	gl_des_ecb_decrypt!(context1,sessionKey,decrypted_sessionKey)
 
+	context2=Gl_des_ctx()
+	gl_des_setkey!(context2,decrypted_sessionKey)
 
+	xml=""
+	data=zeros(UInt8,8)
+	decrypted_data=zeros(UInt8,8)
+	offset=5
+	while ! eof(io)
+		readbytes!(io, data, length(data))
+		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,data,decrypted_data)
+		xml*=String(Char.(decrypted_data[offset:end]))
+		offset=1
+	end
 
-
-	
 
 end
 
