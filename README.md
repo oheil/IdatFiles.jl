@@ -23,11 +23,11 @@ e.g. 204792200130_R01C01_Grn.idat, 204792200130_R01C01_Red.idat
 
 #### Third party packages
 
-* none
+* LightXML
 
 #### Standard Library packages
 
-* none
+* Base64
 
 ## Usage
 

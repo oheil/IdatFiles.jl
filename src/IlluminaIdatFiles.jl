@@ -1,6 +1,8 @@
 
 module IlluminaIdatFiles
 
+using Base64,LightXML
+
 include("decrypt_des.jl")
 
 export idat_read
@@ -180,10 +182,21 @@ function idat_read_v1(io::IO)
 		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,v,v,buffer)
 		data[startindex:endindex].=v[1:(endindex-startindex+1)]
 	end
-
-	
-
-	
+	xdoc=parse_string(String(Char.(data[5:end])));
+	rel=root(xdoc);
+	attrDict=attributes_dict(rel);
+	idat=Idat()
+	for attr in keys(attrDict)
+		if attr == "__MeanBinData"
+			data=base64decode(attrDict[attr])
+			idat.nSNPsRead=div(sizeof(data),4)
+			idat.mean=zeros(Int,idat.nSNPsRead)
+			tmpdata=zeros(Float32,idat.nSNPsRead)
+			read!(IOBuffer(data),tmpdata)			
+			idat.mean=Int.(tmpdata)
+		end
+	end
+	idat
 end
 
 function idat_read_v3(io::IO)
