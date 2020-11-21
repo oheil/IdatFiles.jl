@@ -154,20 +154,22 @@ function idat_read_v1(io::IO)
 	sessionKey=zeros(UInt8,8)
 	readbytes!(io, sessionKey,length(sessionKey))
 
-	context1=Gl_des_ctx()
-	gl_des_setkey!(context1,idatKey)
-	decrypted_sessionKey=zeros(UInt8,8)
-	gl_des_ecb_decrypt!(context1,sessionKey,decrypted_sessionKey)
+	buffer=zeros(UInt32,8)
 
-	context2=Gl_des_ctx()
-	gl_des_setkey!(context2,decrypted_sessionKey)
+	context1=IlluminaIdatFiles.Gl_des_ctx()
+	IlluminaIdatFiles.gl_des_setkey!(context1,idatKey,buffer)
+	decrypted_sessionKey=zeros(UInt8,8)
+	IlluminaIdatFiles.gl_des_ecb_decrypt!(context1,sessionKey,decrypted_sessionKey,buffer)
+
+	context2=IlluminaIdatFiles.Gl_des_ctx()
+	IlluminaIdatFiles.gl_des_setkey!(context2,decrypted_sessionKey,buffer)
 
 	data=read(io)
 	startindex=firstindex(data)
 	endindex=startindex+8-1
 	while(endindex<=length(data))
 		v=view(data,startindex:endindex)
-		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,v,v)
+		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,v,v,buffer)
 		startindex+=8
 		endindex=startindex+8-1
 	end
@@ -175,13 +177,13 @@ function idat_read_v1(io::IO)
 		endindex=length(data)
 		v=zeros(UInt8,8)
 		v[1:(endindex-startindex+1)].=data[startindex:endindex]
-		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,v,v)
+		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,v,v,buffer)
 		data[startindex:endindex].=v[1:(endindex-startindex+1)]
 	end
 
-
 	
 
+	
 end
 
 function idat_read_v3(io::IO)

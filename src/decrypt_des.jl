@@ -1,9 +1,9 @@
 
-macro READ_64BIT_DATA(data, left, right)
+macro READ_64BIT_DATA(data, ldata, left, right)
     quote
-        ldata = UInt32.($(esc(data)))
-        $(esc(left)) = (ldata[1] << 24) | (ldata[2] << 16) | (ldata[3] << 8) | ldata[4] 
-        $(esc(right)) = (ldata[5] << 24) | (ldata[6] << 16) | (ldata[7] << 8) | ldata[8]
+        $(esc(ldata)) .= UInt32.($(esc(data)))
+        $(esc(left)) = ($(esc(ldata))[1] << 24) | ($(esc(ldata))[2] << 16) | ($(esc(ldata))[3] << 8) | $(esc(ldata))[4] 
+        $(esc(right)) = ($(esc(ldata))[5] << 24) | ($(esc(ldata))[6] << 16) | ($(esc(ldata))[7] << 8) | $(esc(ldata))[8]
     end
 end
 
@@ -204,8 +204,8 @@ struct Gl_des_ctx
     end
 end
 
-function des_key_schedule!( key::Array{UInt8,1}, subkey::Array{UInt32,1})
-    @READ_64BIT_DATA(key, left, right)
+function des_key_schedule!( key::Array{UInt8,1}, subkey::Array{UInt32,1}, buffer::Array{UInt32,1})
+    @READ_64BIT_DATA(key, buffer, left, right)
     @DO_PERMUTATION(right, work, left, 4, 0x0f0f0f0f)
     @DO_PERMUTATION(right, work, left, 0, 0x10101010)
     left = (
@@ -282,17 +282,17 @@ function des_key_schedule!( key::Array{UInt8,1}, subkey::Array{UInt32,1})
     end
 end
 
-function gl_des_setkey!(context::Gl_des_ctx,key::Array{UInt8,1})
-    des_key_schedule!(key,context.encrypt_subkeys)
+function gl_des_setkey!(context::Gl_des_ctx,key::Array{UInt8,1}, buffer::Array{UInt32,1})
+    des_key_schedule!(key,context.encrypt_subkeys, buffer)
     for i in 1:2:31
         context.decrypt_subkeys[i] = context.encrypt_subkeys[32-i]
         context.decrypt_subkeys[i+1] = context.encrypt_subkeys[32-i+1]
     end
 end
 
-function gl_des_ecb_crypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1}, mode::Bool)
+function gl_des_ecb_crypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1}, mode::Bool, buffer::Array{UInt32,1})
     keys = mode ? context.decrypt_subkeys : context.encrypt_subkeys
-    @READ_64BIT_DATA(from, left, right)
+    @READ_64BIT_DATA(from, buffer, left, right)
     @INITIAL_PERMUTATION(left, work, right)
     keys_index=0
     @DES_ROUND(right, left, work, keys, keys_index) 
@@ -315,11 +315,11 @@ function gl_des_ecb_crypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to
     @WRITE_64BIT_DATA(to, right, left)
 end
 
-function gl_des_ecb_decrypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1})
-    gl_des_ecb_crypt!(context, from, to, true)
+function gl_des_ecb_decrypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1}, buffer::Array{UInt32,1})
+    gl_des_ecb_crypt!(context, from, to, true, buffer)
 end
 
-function gl_des_ecb_encrypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1})
-    gl_des_ecb_crypt!(context, from, to, false)
+function gl_des_ecb_encrypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1}, buffer::Array{UInt32,1})
+    gl_des_ecb_crypt!(context, from, to, false, buffer)
 end
 
