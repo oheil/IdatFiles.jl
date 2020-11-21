@@ -162,17 +162,25 @@ function idat_read_v1(io::IO)
 	context2=Gl_des_ctx()
 	gl_des_setkey!(context2,decrypted_sessionKey)
 
-	xml=""
-	data=zeros(UInt8,8)
-	decrypted_data=zeros(UInt8,8)
-	offset=5
-	while ! eof(io)
-		readbytes!(io, data, length(data))
-		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,data,decrypted_data)
-		xml*=String(Char.(decrypted_data[offset:end]))
-		offset=1
+	data=read(io)
+	startindex=firstindex(data)
+	endindex=startindex+8-1
+	while(endindex<=length(data))
+		v=view(data,startindex:endindex)
+		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,v,v)
+		startindex+=8
+		endindex=startindex+8-1
+	end
+	if startindex <= length(data)
+		endindex=length(data)
+		v=zeros(UInt8,8)
+		v[1:(endindex-startindex+1)].=data[startindex:endindex]
+		IlluminaIdatFiles.gl_des_ecb_decrypt!(context2,v,v)
+		data[startindex:endindex].=v[1:(endindex-startindex+1)]
 	end
 
+
+	
 
 end
 

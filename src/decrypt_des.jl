@@ -290,7 +290,7 @@ function gl_des_setkey!(context::Gl_des_ctx,key::Array{UInt8,1})
     end
 end
 
-function gl_des_ecb_crypt!(context::Gl_des_ctx, from::Array{UInt8,1}, to::Array{UInt8,1}, mode::Bool)
+function gl_des_ecb_crypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1}, mode::Bool)
     keys = mode ? context.decrypt_subkeys : context.encrypt_subkeys
     @READ_64BIT_DATA(from, left, right)
     @INITIAL_PERMUTATION(left, work, right)
@@ -315,11 +315,11 @@ function gl_des_ecb_crypt!(context::Gl_des_ctx, from::Array{UInt8,1}, to::Array{
     @WRITE_64BIT_DATA(to, right, left)
 end
 
-function gl_des_ecb_decrypt!(context::Gl_des_ctx, from::Array{UInt8,1}, to::Array{UInt8,1})
+function gl_des_ecb_decrypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1})
     gl_des_ecb_crypt!(context, from, to, true)
 end
 
-function gl_des_ecb_encrypt!(context::Gl_des_ctx, from::Array{UInt8,1}, to::Array{UInt8,1})
+function gl_des_ecb_encrypt!(context::Gl_des_ctx, from::AbstractArray{UInt8,1}, to::AbstractArray{UInt8,1})
     gl_des_ecb_crypt!(context, from, to, false)
 end
 
