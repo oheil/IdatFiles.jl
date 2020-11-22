@@ -26,30 +26,22 @@ function read_string(io)
 	(join(Array{Char}(b)),bytes)
 end
 
-knownCodes = Dict(
-     1000 => "nSNPsRead" ,
-      102 => "IlluminaID",
-      103 => "SD"        ,
-      104 => "Mean"      ,
-      107 => "NBeads"    ,
-      200 => "MidBlock"  ,
-      300 => "RunInfo"   ,
-      400 => "RedGreen"  ,
-      401 => "MostlyNull", # 'Manifest', cf [1].
-      402 => "Barcode"   ,
-      403 => "ChipType"  ,
-      404 => "MostlyA"   , # 'Stripe', cf [1].
-      405 => "Unknown1" ,
-      406 => "Unknown2" , # 'Sample ID', cf [1].
-      407 => "Unknown3" ,
-      408 => "Unknown4" , # 'Plate', cf [1].
-      409 => "Unknown5" , # 'Well', cf [1].
-      410 => "Unknown6" ,
-      510 => "Unknown7" 
-    )
-
 mutable struct Idat
-    nSNPsRead::Int32
+	nSNPsRead::Int32
+
+	data::Dict{String,AbstractArray}
+
+	meanBinData::Array{Float64,1}
+	trimmedMeanBinData::Array{Float64,1}
+	devBinData::Array{Float64,1}
+	medianBinData::Array{Float64,1}
+	backgroundBinData::Array{Float64,1}
+	backgroundDevBinData::Array{Float64,1}
+	codesBinData::Array{Int,1}
+	numBeadsBinData::Array{Int,1}
+	numGoodBeadsBinData::Array{Int,1}
+	illumicodeBinData::Array{Int,1}
+
     illuminaID::Array{Int,1}
     sd::Array{Int,1}
     mean::Array{Int,1}
@@ -77,6 +69,19 @@ mutable struct Idat
 	function Idat(nSNPsRead=0)
 		new(
 			nSNPsRead,
+
+			Dict{String,AbstractArray}(),
+
+			Array{Float64,1}(undef,nSNPsRead),
+			Array{Float64,1}(undef,nSNPsRead),
+			Array{Float64,1}(undef,nSNPsRead),
+			Array{Float64,1}(undef,nSNPsRead),
+			Array{Float64,1}(undef,nSNPsRead),
+			Array{Float64,1}(undef,nSNPsRead),
+			Array{Int,1}(undef,nSNPsRead),
+			Array{Int,1}(undef,nSNPsRead),
+			Array{Int,1}(undef,nSNPsRead),
+			Array{Int,1}(undef,nSNPsRead),
 			Array{Int,1}(undef,nSNPsRead),
 			Array{Int,1}(undef,nSNPsRead),
 			Array{Int,1}(undef,nSNPsRead),
@@ -186,20 +191,62 @@ function idat_read_v1(io::IO)
 	rel=root(xdoc);
 	attrDict=attributes_dict(rel);
 	idat=Idat()
+	dataBinTypes=Dict(
+		"__MeanBinData" => Float32,
+		"__TrimmedMeanBinData" => Float32,
+		"__DevBinData" => Float32,
+		"__MedianBinData" => Float32,
+		"__BackgroundBinData" => Float32,
+		"__BackgroundDevBinData" => Float32,
+		"__CodesBinData" => UInt32,
+		"__NumBeadsBinData" => UInt32,
+		"__NumGoodBeadsBinData" => UInt32,
+	)
+	dataTypes=Dict(
+		"__MeanBinData" => Float64,
+		"__TrimmedMeanBinData" => Float64,
+		"__DevBinData" => Float64,
+		"__MedianBinData" => Float64,
+		"__BackgroundBinData" => Float64,
+		"__BackgroundDevBinData" => Float64,
+		"__CodesBinData" => Int,
+		"__NumBeadsBinData" => Int,
+		"__NumGoodBeadsBinData" => Int,
+	)
 	for attr in keys(attrDict)
-		if attr == "__MeanBinData"
+		if haskey(dataBinTypes,attr)
 			data=base64decode(attrDict[attr])
-			idat.nSNPsRead=div(sizeof(data),4)
-			idat.mean=zeros(Int,idat.nSNPsRead)
-			tmpdata=zeros(Float32,idat.nSNPsRead)
-			read!(IOBuffer(data),tmpdata)			
-			idat.mean=Int.(tmpdata)
+			tmpdata=zeros(dataBinTypes[attr], div(sizeof(data),4) )
+			read!(IOBuffer(data),tmpdata)
+			idat.data[attr] = (dataTypes[attr]).(tmpdata)
 		end
 	end
 	idat
 end
 
 function idat_read_v3(io::IO)
+	knownCodes = Dict(
+		1000 => "nSNPsRead" ,
+		102 => "IlluminaID",
+		103 => "SD"        ,
+		104 => "Mean"      ,
+		107 => "NBeads"    ,
+		200 => "MidBlock"  ,
+		300 => "RunInfo"   ,
+		400 => "RedGreen"  ,
+		401 => "MostlyNull", # 'Manifest', cf [1].
+		402 => "Barcode"   ,
+		403 => "ChipType"  ,
+		404 => "MostlyA"   , # 'Stripe', cf [1].
+		405 => "Unknown1" ,
+		406 => "Unknown2" , # 'Sample ID', cf [1].
+		407 => "Unknown3" ,
+		408 => "Unknown4" , # 'Plate', cf [1].
+		409 => "Unknown5" , # 'Well', cf [1].
+		410 => "Unknown6" ,
+		510 => "Unknown7" 
+    )
+
 	nfields=read(io,Int32)
 
 	codes=Array{String,1}(undef,nfields)

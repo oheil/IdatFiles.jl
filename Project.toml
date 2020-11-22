@@ -3,6 +3,10 @@ uuid = "6319967d-51f1-455d-8322-e2c0d31f3595"
 authors = ["oheil <git@heilbit.de> and contributors"]
 version = "0.1.2"
 
+[deps]
+Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+LightXML = "9c8b4983-aa76-5018-a973-4c85ecc9e179"
+
 [compat]
 julia = "1"
 
