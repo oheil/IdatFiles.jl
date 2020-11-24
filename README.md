@@ -77,8 +77,8 @@ idat = GzipDecompressorStream(open("204792200130_R01C01_Red.idat.gz")) |> idat_r
 The returned `idat` is a struct of type `IlluminaIdatFiles.Idat`:
 ```julia
 mutable struct Idat
-	nRead::Int32
-	data::Dict{String,AbstractArray}
+    nRead::Int32
+    data::Dict{String,AbstractArray}
     redGreen::Int32
     mostlyNull::String
     barcode::String
@@ -90,13 +90,13 @@ mutable struct Idat
     unknown4::String
     unknown5::String
     unknown6::String
-	unknown7::String
-	tenthPercentile::Int
-	sampleBeadSet::String
-	sentrixFormat::String
-	sectionLabel::String
-	beadSet::String
-	veracodeLotNumber::String
+    unknown7::String
+    tenthPercentile::Int
+    sampleBeadSet::String
+    sentrixFormat::String
+    sectionLabel::String
+    beadSet::String
+    veracodeLotNumber::String
 end
 ```
 Where the most important member is
