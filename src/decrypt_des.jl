@@ -1,3 +1,71 @@
+#=
+/* des.c --- DES and Triple-DES encryption/decryption Algorithm
+ * Copyright (C) 1998, 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+ *    Free Software Foundation, Inc.
+ *
+ * This file is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2, or (at your
+ * option) any later version.
+ *
+ * This file is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ *
+ */
+
+/* Adapted for gnulib by Simon Josefsson, based on Libgcrypt. */
+
+/* Adapted for illuminaio by Mike Smith. */
+
+/* Adapted for Julia/IlluminaIdatFiles by Oliver Heil. */
+
+/*
+ *  U S A G E
+ * ===========
+ *
+ * For DES or Triple-DES encryption/decryption you must initialize a proper
+ * encryption context with a key.
+ *
+ * A DES key is 64bit wide but only 56bits of the key are used. The remaining
+ * bits are parity bits and they will _not_ checked in this implementation, but
+ * simply ignored.
+ *
+ * For Triple-DES you could use either two 64bit keys or three 64bit keys.
+ * The parity bits will _not_ checked, too.
+ *
+ * After initializing a context with a key you could use this context to
+ * encrypt or decrypt data in 64bit blocks in Electronic Codebook Mode.
+ *
+ * DES Example
+ * -----------
+ *     unsigned char key[8];
+ *     unsigned char plaintext[8];
+ *     unsigned char ciphertext[8];
+ *     unsigned char recoverd[8];
+ *     gl_des_ctx context;
+ *
+ *     // Fill 'key' and 'plaintext' with some data
+ *     ....
+ *
+ *     // Set up the DES encryption context
+ *     gl_des_setkey(&context, key);
+ *
+ *     // Encrypt the plaintext
+ *     des_ecb_encrypt(&context, plaintext, ciphertext);
+ *
+ *     // To recover the orginal plaintext from ciphertext use:
+ *     des_ecb_decrypt(&context, ciphertext, recoverd);
+ *
+ *
+ */
+=#
 
 macro READ_64BIT_DATA(data, ldata, left, right)
     quote
