@@ -104,7 +104,7 @@ Where the most important member is
 idat.data
 ```
 which contains all data (and some other) arrays available in the .idat file:
-##### e.g. Illumina Infinium MethylationEPIC BeadChip
+##### e.g. Illumina Infinium MethylationEPIC BeadChip:
 ```
 julia> idat.data
 Dict{String,AbstractArray} with 10 entries:
@@ -127,7 +127,7 @@ Base.KeySet for a Dict{String,AbstractArray} with 10 entries. Keys:
   "Mean"
   "blockCode"
 ```
-##### e.g. Illumina HumanHT 12 Gene Expression BeadChip
+##### e.g. Illumina HumanHT 12 Gene Expression BeadChip:
 ```
 julia> idat.data
 Dict{String,AbstractArray} with 15 entries:
@@ -155,5 +155,5 @@ Base.KeySet for a Dict{String,AbstractArray} with 15 entries. Keys:
   "__MedianBinData"  
 ```
 
-The keys are the original data specifiers present in the .idat file, which are different for the different chip types and may be different between versions.
+The keys are the original data specifiers present in the .idat file, which are different for the different chip types and maybe different between versions.
 
