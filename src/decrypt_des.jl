@@ -26,45 +26,6 @@
 
 /* Adapted for Julia/IlluminaIdatFiles by Oliver Heil. */
 
-/*
- *  U S A G E
- * ===========
- *
- * For DES or Triple-DES encryption/decryption you must initialize a proper
- * encryption context with a key.
- *
- * A DES key is 64bit wide but only 56bits of the key are used. The remaining
- * bits are parity bits and they will _not_ checked in this implementation, but
- * simply ignored.
- *
- * For Triple-DES you could use either two 64bit keys or three 64bit keys.
- * The parity bits will _not_ checked, too.
- *
- * After initializing a context with a key you could use this context to
- * encrypt or decrypt data in 64bit blocks in Electronic Codebook Mode.
- *
- * DES Example
- * -----------
- *     unsigned char key[8];
- *     unsigned char plaintext[8];
- *     unsigned char ciphertext[8];
- *     unsigned char recoverd[8];
- *     gl_des_ctx context;
- *
- *     // Fill 'key' and 'plaintext' with some data
- *     ....
- *
- *     // Set up the DES encryption context
- *     gl_des_setkey(&context, key);
- *
- *     // Encrypt the plaintext
- *     des_ecb_encrypt(&context, plaintext, ciphertext);
- *
- *     // To recover the orginal plaintext from ciphertext use:
- *     des_ecb_decrypt(&context, ciphertext, recoverd);
- *
- *
- */
 =#
 
 macro READ_64BIT_DATA(data, ldata, left, right)
