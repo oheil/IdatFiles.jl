@@ -31,23 +31,6 @@ mutable struct Idat
 
 	data::Dict{String,AbstractArray}
 
-	meanBinData::Array{Float64,1}
-	trimmedMeanBinData::Array{Float64,1}
-	devBinData::Array{Float64,1}
-	medianBinData::Array{Float64,1}
-	backgroundBinData::Array{Float64,1}
-	backgroundDevBinData::Array{Float64,1}
-	codesBinData::Array{Int,1}
-	numBeadsBinData::Array{Int,1}
-	numGoodBeadsBinData::Array{Int,1}
-	illumicodeBinData::Array{Int,1}
-
-    illuminaID::Array{Int,1}
-    sd::Array{Int,1}
-    mean::Array{Int,1}
-    nbeads::Array{Int,1}
-    nMidBlockEntries::Int32
-    midBlock::Array{Int32,1}
     redGreen::Int32
     mostlyNull::String
     barcode::String
@@ -59,35 +42,20 @@ mutable struct Idat
     unknown4::String
     unknown5::String
     unknown6::String
-    unknown7::String
-    nRunInfoBlocks::Int32
-    runTime::Array{String,1}
-    blockType::Array{String,1}
-    blockPars::Array{String,1}
-    blockCode::Array{String,1}
-	codeVersion::Array{String,1}
+	unknown7::String
+	
+	tenthPercentile::Int
+	sampleBeadSet::String
+	sentrixFormat::String
+	sectionLabel::String
+	beadSet::String
+	veracodeLotNumber::String
+
+
 	function Idat(nSNPsRead=0)
 		new(
 			nSNPsRead,
-
 			Dict{String,AbstractArray}(),
-
-			Array{Float64,1}(undef,nSNPsRead),
-			Array{Float64,1}(undef,nSNPsRead),
-			Array{Float64,1}(undef,nSNPsRead),
-			Array{Float64,1}(undef,nSNPsRead),
-			Array{Float64,1}(undef,nSNPsRead),
-			Array{Float64,1}(undef,nSNPsRead),
-			Array{Int,1}(undef,nSNPsRead),
-			Array{Int,1}(undef,nSNPsRead),
-			Array{Int,1}(undef,nSNPsRead),
-			Array{Int,1}(undef,nSNPsRead),
-			Array{Int,1}(undef,nSNPsRead),
-			Array{Int,1}(undef,nSNPsRead),
-			Array{Int,1}(undef,nSNPsRead),
-			Array{Int,1}(undef,nSNPsRead),
-			-1,
-			Array{Int32,1}(undef,0),
 			-1,
 			"",
 			"",
@@ -101,11 +69,11 @@ mutable struct Idat
 			"",
 			"",
 			-1,
-			Array{String,1}(undef,0),
-			Array{String,1}(undef,0),
-			Array{String,1}(undef,0),
-			Array{String,1}(undef,0),
-			Array{String,1}(undef,0)	
+			"",
+			"",
+			"",
+			"",
+			"",
 		)
 	end
 end
@@ -198,9 +166,14 @@ function idat_read_v1(io::IO)
 		"__MedianBinData" => Float32,
 		"__BackgroundBinData" => Float32,
 		"__BackgroundDevBinData" => Float32,
+		"__IllumicodeBinData" => UInt32,
 		"__CodesBinData" => UInt32,
 		"__NumBeadsBinData" => UInt32,
 		"__NumGoodBeadsBinData" => UInt32,
+		"Opa" => nothing,
+		"DnaPlate" => nothing,
+		"Well" => nothing,
+		"Dna" => nothing,
 	)
 	dataTypes=Dict(
 		"__MeanBinData" => Float64,
@@ -209,18 +182,80 @@ function idat_read_v1(io::IO)
 		"__MedianBinData" => Float64,
 		"__BackgroundBinData" => Float64,
 		"__BackgroundDevBinData" => Float64,
+		"__IllumicodeBinData" => Int,
 		"__CodesBinData" => Int,
 		"__NumBeadsBinData" => Int,
 		"__NumGoodBeadsBinData" => Int,
+		"Opa" => nothing,
+		"DnaPlate" => nothing,
+		"Well" => nothing,
+		"Dna" => nothing,
 	)
 	for attr in keys(attrDict)
 		if haskey(dataBinTypes,attr)
-			data=base64decode(attrDict[attr])
-			tmpdata=zeros(dataBinTypes[attr], div(sizeof(data),4) )
-			read!(IOBuffer(data),tmpdata)
-			idat.data[attr] = (dataTypes[attr]).(tmpdata)
+			if dataBinTypes[attr] !== nothing
+				data=base64decode(attrDict[attr])
+				tmpdata=zeros(dataBinTypes[attr], div(sizeof(data),4) )
+				read!(IOBuffer(data),tmpdata)
+				idat.data[attr] = (dataTypes[attr]).(tmpdata)
+			end
+		else
+			@warn "Unknown attribute "*attr
 		end
 	end
+	for el in child_elements(rel)
+		if name(el)=="TenthPercentile"
+			idat.tenthPercentile = parse(Int,content(el))
+		elseif name(el)=="SampleBeadSet"
+			idat.sampleBeadSet = content(el)
+		elseif name(el)=="BarCode"
+			idat.barcode = content(el)
+		elseif name(el)=="SentrixFormat"
+			idat.sentrixFormat = content(el)
+		elseif name(el)=="SectionLabel"
+			idat.sectionLabel = content(el)
+		elseif name(el)=="BeadSet"
+			idat.beadSet = content(el)
+		elseif name(el)=="VeracodeLotNumber"
+			idat.veracodeLotNumber = content(el)
+		elseif name(el)=="ProcessHistory"
+			phname=Array{String,1}(undef,0)
+			softwareApp=Array{String,1}(undef,0)
+			version=Array{String,1}(undef,0)
+			date=Array{String,1}(undef,0)
+			parameters=Array{String,1}(undef,0)
+			for processEntryEl in child_elements(el)
+				for detailEl in child_elements(processEntryEl)
+					if name(detailEl)=="Name"
+						push!(phname,content(detailEl))
+					elseif name(detailEl)=="SoftwareApp"
+						push!(softwareApp,content(detailEl))
+					elseif name(detailEl)=="Version"
+						push!(version,content(detailEl))
+					elseif name(detailEl)=="Date"
+						push!(date,content(detailEl))
+					elseif name(detailEl)=="Parameters"
+						push!(parameters,content(detailEl))
+					else
+						@warn "Unknown ProcessHistory subelement "*name(detailEl)
+					end
+				end
+			end
+			idat.data["Name"]=phname
+			idat.data["SoftwareApp"]=softwareApp
+			idat.data["Version"]=version
+			idat.data["Date"]=date
+			idat.data["Parameters"]=parameters
+		else
+			@warn "Unknown child element "*name(el)
+		end
+	end
+
+
+
+
+
+	free(xdoc)
 	idat
 end
 
@@ -246,6 +281,30 @@ function idat_read_v3(io::IO)
 		410 => "Unknown6" ,
 		510 => "Unknown7" 
     )
+	dataBinTypes=Dict(
+		"IlluminaID" => Int32,
+		"SD" => UInt16,
+		"Mean" => UInt16,
+		"NBeads" => UInt8,
+		"MidBlock" => Int32,
+		"RunInfo" => Int32,
+		"blockType" => String,
+		"blockPars" => String,
+		"blockCode" => String,
+		"codeVersion" => String,
+	)
+	dataTypes=Dict(
+		"IlluminaID" => Int,
+		"SD" => Int,
+		"Mean" => Int,
+		"NBeads" => Int,
+		"MidBlock" => Int,
+		"RunInfo" => Int,
+		"blockType" => String,
+		"blockPars" => String,
+		"blockCode" => String,
+		"codeVersion" => String,
+	)
 
 	nfields=read(io,Int32)
 
@@ -290,90 +349,68 @@ function idat_read_v3(io::IO)
 				idat_seek(io,offset)
 				nextPosition=offset
 			end
-			if codes[index]=="IlluminaID"
-				illuminaID=Array{Int32,1}(undef,nSNPsRead)
-				read!(io, illuminaID)
-				nextPosition+=nSNPsRead*sizeof(eltype(illuminaID))
-				idat.illuminaID=Int.(illuminaID)
-			elseif codes[index]=="SD"
-				sd=Array{UInt16,1}(undef,nSNPsRead)
-				read!(io, sd)
-				nextPosition+=nSNPsRead*sizeof(eltype(sd))
-				idat.sd=Int.(sd)
-			elseif codes[index]=="Mean"
-				mean=Array{UInt16,1}(undef,nSNPsRead)
-				read!(io, mean)
-				nextPosition+=nSNPsRead*sizeof(eltype(mean))
-				idat.mean=Int.(mean)
-			elseif codes[index]=="NBeads"
-				nbeads=Array{UInt8,1}(undef,nSNPsRead)
-				read!(io, nbeads)
-				nextPosition+=nSNPsRead*sizeof(eltype(nbeads))
-				idat.nbeads=Int.(nbeads)
-			elseif codes[index]=="MidBlock"
-				idat.nMidBlockEntries=read(io,typeof(idat.nMidBlockEntries))
-				nextPosition+=sizeof(typeof(idat.nMidBlockEntries))
-				idat.midBlock=Array{Int32,1}(undef,idat.nMidBlockEntries)
-				read!(io, idat.midBlock)
-				nextPosition+=idat.nMidBlockEntries*sizeof(eltype(idat.midBlock))
-			elseif codes[index]=="RunInfo"
-				idat.nRunInfoBlocks=read(io,typeof(idat.nRunInfoBlocks))
-				nextPosition+=sizeof(typeof(idat.nRunInfoBlocks))
-				idat.runTime=Array{String,1}(undef,idat.nRunInfoBlocks)
-				idat.blockType=Array{String,1}(undef,idat.nRunInfoBlocks)
-				idat.blockPars=Array{String,1}(undef,idat.nRunInfoBlocks)
-				idat.blockCode=Array{String,1}(undef,idat.nRunInfoBlocks)
-				idat.codeVersion=Array{String,1}(undef,idat.nRunInfoBlocks)
-				for i in 1:idat.nRunInfoBlocks
-					(idat.runTime[i],n)=read_string(io)
-					nextPosition+=n
-					(idat.blockType[i],n)=read_string(io)
-					nextPosition+=n
-					(idat.blockPars[i],n)=read_string(io)
-					nextPosition+=n
-					(idat.blockCode[i],n)=read_string(io)
-					nextPosition+=n
-					(idat.codeVersion[i],n)=read_string(io)
-					nextPosition+=n
+			if findfirst( isequal(codes[index]), collect(keys(dataTypes)) ) !== nothing
+				n=nSNPsRead
+				if codes[index]=="MidBlock"
+					n=read(io,Int32)
+					nextPosition+=sizeof(Int32)
+				end
+				if codes[index]=="RunInfo"
+					n=read(io,Int32)
+					nextPosition+=sizeof(Int32)
+					for runInfo in ["runTime","blockType","blockPars","blockCode","codeVersion"]
+						idat.data[runInfo]=Array{String,1}(undef,n)
+					end
+					for i in 1:n
+						for runInfo in ["runTime","blockType","blockPars","blockCode","codeVersion"]
+							(idat.data[runInfo][i],nbytes)=read_string(io)
+							nextPosition+=nbytes
+						end
+					end
+				else
+					tmpdata=zeros(dataBinTypes[codes[index]],n)
+					read!(io, tmpdata)
+					nextPosition+=n*sizeof(eltype(tmpdata))
+					idat.data[codes[index]] = (dataTypes[codes[index]]).(tmpdata)
 				end
 			elseif codes[index]=="RedGreen"
 				idat.redGreen=read(io,typeof(idat.redGreen))
 				nextPosition+=sizeof(typeof(idat.redGreen))
 			elseif codes[index]=="MostlyNull"
-				(idat.mostlyNull,n)=read_string(io)
-				nextPosition+=n
+				(idat.mostlyNull,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="Barcode"
-				(idat.barcode,n)=read_string(io)
-				nextPosition+=n
+				(idat.barcode,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="ChipType"
-				(idat.chipType,n)=read_string(io)
-				nextPosition+=n
+				(idat.chipType,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="MostlyA"
-				(idat.mostlyA,n)=read_string(io)
-				nextPosition+=n
+				(idat.mostlyA,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="Unknown1"
-				(idat.unknown1,n)=read_string(io)
-				nextPosition+=n
+				(idat.unknown1,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="Unknown2"
-				(idat.unknown2,n)=read_string(io)
-				nextPosition+=n
+				(idat.unknown2,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="Unknown3"
-				(idat.unknown3,n)=read_string(io)
-				nextPosition+=n
+				(idat.unknown3,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="Unknown4"
-				(idat.unknown4,n)=read_string(io)
-				nextPosition+=n
+				(idat.unknown4,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="Unknown5"
-				(idat.unknown5,n)=read_string(io)
-				nextPosition+=n
+				(idat.unknown5,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="Unknown6"
-				(idat.unknown6,n)=read_string(io)
-				nextPosition+=n
+				(idat.unknown6,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			elseif codes[index]=="Unknown7"
-				(idat.unknown7,n)=read_string(io)
-				nextPosition+=n
+				(idat.unknown7,nbytes)=read_string(io)
+				nextPosition+=nbytes
 			else
-				@warn "Unknown code in file "*file*": "*codes[index]
+				@warn "Unknown code: "*codes[index]
 			end
 		end
 	end
