@@ -250,11 +250,6 @@ function idat_read_v1(io::IO)
 			@warn "Unknown child element "*name(el)
 		end
 	end
-
-
-
-
-
 	free(xdoc)
 	idat
 end
