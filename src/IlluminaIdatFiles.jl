@@ -27,10 +27,8 @@ function read_string(io)
 end
 
 mutable struct Idat
-	nSNPsRead::Int32
-
+	nRead::Int32
 	data::Dict{String,AbstractArray}
-
     redGreen::Int32
     mostlyNull::String
     barcode::String
@@ -43,18 +41,15 @@ mutable struct Idat
     unknown5::String
     unknown6::String
 	unknown7::String
-	
 	tenthPercentile::Int
 	sampleBeadSet::String
 	sentrixFormat::String
 	sectionLabel::String
 	beadSet::String
 	veracodeLotNumber::String
-
-
-	function Idat(nSNPsRead=0)
+	function Idat(nRead=-1)
 		new(
-			nSNPsRead,
+			nRead,
 			Dict{String,AbstractArray}(),
 			-1,
 			"",
@@ -198,6 +193,13 @@ function idat_read_v1(io::IO)
 				tmpdata=zeros(dataBinTypes[attr], div(sizeof(data),4) )
 				read!(IOBuffer(data),tmpdata)
 				idat.data[attr] = (dataTypes[attr]).(tmpdata)
+				if idat.nRead < 0
+					idat.nRead=length(idat.data[attr])
+				else
+					if idat.nRead != length(idat.data[attr])
+						@warn "length of data field not equal "*attr
+					end
+				end
 			end
 		else
 			@warn "Unknown attribute "*attr
@@ -325,10 +327,10 @@ function idat_read_v3(io::IO)
 
 	nextPosition=byteOffsets[nSNPsReadIndex]
 	idat_seek(io,nextPosition)
-	nSNPsRead = read(io,Int32)
+	nRead = read(io,Int32)
 	nextPosition+=4
 
-	idat=Idat(nSNPsRead)
+	idat=Idat(nRead)
 
 	sortedOffsets=sortperm(byteOffsets)
 	for index in sortedOffsets
@@ -345,7 +347,7 @@ function idat_read_v3(io::IO)
 				nextPosition=offset
 			end
 			if findfirst( isequal(codes[index]), collect(keys(dataTypes)) ) !== nothing
-				n=nSNPsRead
+				n=nRead
 				if codes[index]=="MidBlock"
 					n=read(io,Int32)
 					nextPosition+=sizeof(Int32)

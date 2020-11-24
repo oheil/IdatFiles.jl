@@ -12,6 +12,7 @@ The implementation follows the code of the [R bioconductor package illuminaio](h
 This package is in an early stage and only the following microarrays .idat files are supported:
 * Illumina Infinium MethylationEPIC BeadChip
 * Illumina Infinium Human Methylation 450K BeadChip
+* Illumina HumanHT 12 Gene Expression BeadChip
 
 e.g. 204792200130_R01C01_Grn.idat, 204792200130_R01C01_Red.idat
 
@@ -41,48 +42,43 @@ using IlluminaIdatFiles
 ```
 To read an illumina idat file use the following command:
 ```julia
-idat=idat_read(filename)
+idat = idat_read(filename)
 ```
 Examples:
 ```julia
-filename=raw"c:\temp\idat\204792200130_R01C01_Grn.idat"
-data=idat_read(filename)
+filename = raw"c:\temp\idat\204792200130_R01C01_Grn.idat"
+idat = idat_read(filename)
 ```
 
 ```julia
 using GZip
 fh = GZip.open("204792200130_R01C01_Red.idat.gz")
-data=idat_read(fh)
+idat = idat_read(fh)
 close(fh)
 ```
 
 ```julia
 using GZip
-data = GZip.open("204792200130_R01C01_Red.idat.gz") |> idat_read
+idat = GZip.open("204792200130_R01C01_Red.idat.gz") |> idat_read
 ```
 
 ```julia
 using TranscodingStreams, CodecZlib
 stream = GzipDecompressorStream(open("204792200130_R01C01_Red.idat.gz"))
-data = idat_read(stream)
+idat = idat_read(stream)
 close(stream)
 ```
 
 ```julia
 using TranscodingStreams, CodecZlib
-data = GzipDecompressorStream(open("204792200130_R01C01_Red.idat.gz")) |> idat_read
+idat = GzipDecompressorStream(open("204792200130_R01C01_Red.idat.gz")) |> idat_read
 ```
 
-The returned `data` is a struct of type `IlluminaIdatFiles.Idat`:
+The returned `idat` is a struct of type `IlluminaIdatFiles.Idat`:
 ```julia
 mutable struct Idat
-    nSNPsRead::Int32
-    illuminaID::Array{Int,1}
-    sd::Array{Int,1}
-    mean::Array{Int,1}
-    nbeads::Array{Int,1}
-    nMidBlockEntries::Int32
-    midBlock::Array{Int32,1}
+	nRead::Int32
+	data::Dict{String,AbstractArray}
     redGreen::Int32
     mostlyNull::String
     barcode::String
@@ -94,20 +90,70 @@ mutable struct Idat
     unknown4::String
     unknown5::String
     unknown6::String
-    unknown7::String
-    nRunInfoBlocks::Int32
-    runTime::Array{String,1}
-    blockType::Array{String,1}
-    blockPars::Array{String,1}
-    blockCode::Array{String,1}
-    codeVersion::Array{String,1}
+	unknown7::String
+	tenthPercentile::Int
+	sampleBeadSet::String
+	sentrixFormat::String
+	sectionLabel::String
+	beadSet::String
+	veracodeLotNumber::String
 end
 ```
-Where the most important members are
+Where the most important member is
 ```
-data.illuminaID
-data.sd
-data.mean
-data.nbeads
+idat.data
 ```
+which contains all data (and some other) arrays available in the .idat file:
+##### e.g. Illumina Infinium MethylationEPIC BeadChip
+```
+julia> idat.data
+Dict{String,AbstractArray} with 10 entries:
+  "IlluminaID"  => [1600101, 1600111, 1600115, 1600123, 1600131,...
+  "Mean"        => [3165, 812, 456, 1848, 101, 7450, 5153, 947, 620, 364, ...
+  "SD"          => [229, 288, 233, 219, 60, 983, 683, 169,...
+  "NBeads"      => [14, 7, 19, 14, 14, 10, 16, 15, 12, 12...
+  ...
+
+julia> keys(idat.data)
+Base.KeySet for a Dict{String,AbstractArray} with 10 entries. Keys:
+  "blockType"
+  "NBeads"
+  "MidBlock"
+  "codeVersion"
+  "SD"
+  "runTime"
+  "blockPars"
+  "IlluminaID"
+  "Mean"
+  "blockCode"
+```
+##### e.g. Illumina HumanHT 12 Gene Expression BeadChip
+```
+julia> idat.data
+Dict{String,AbstractArray} with 15 entries:
+  "__IllumicodeBinData"    => [10008, 10010, 10014, 10017, 10019, 10020,...
+  "__MeanBinData"          => [768.46, 94.0066, 86.5272, 94.533, 112.999,...
+  "__NumBeadsBinData"      => [23, 22, 21, 25, 16, 26, 24, 17,...
+  ...
+
+julia> keys(idat.data)
+Base.KeySet for a Dict{String,AbstractArray} with 15 entries. Keys:
+  "__CodesBinData"
+  "SoftwareApp"
+  "__BackgroundBinData"
+  "Date"
+  "__IllumicodeBinData"
+  "Version"
+  "__TrimmedMeanBinData"
+  "Name"
+  "__BackgroundDevBinData"
+  "__DevBinData"
+  "__MeanBinData"
+  "Parameters"
+  "__NumGoodBeadsBinData"
+  "__NumBeadsBinData"
+  "__MedianBinData"  
+```
+
+The keys are the original data specifiers present in the .idat file, which are different for the different chip types and may be different between versions.
 
