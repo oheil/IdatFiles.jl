@@ -9,10 +9,12 @@ The implementation follows the code of the [R bioconductor package illuminaio](h
 
 ## Currently supported files
 
-This package is in an early stage and only the following microarrays .idat files are supported:
+This package is in an early stage and the following microarrays .idat files are supported:
+* Illumina HumanRef-8 Expression BeadChips
+* Illumina HumanHT 12 Gene Expression BeadChip
 * Illumina Infinium MethylationEPIC BeadChip
 * Illumina Infinium Human Methylation 450K BeadChip
-* Illumina HumanHT 12 Gene Expression BeadChip
+* Illumina Infinium Mouse Methylation BeadChip
 
 e.g. 204792200130_R01C01_Grn.idat, 204792200130_R01C01_Red.idat
 
