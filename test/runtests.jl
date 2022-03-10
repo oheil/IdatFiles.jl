@@ -1,7 +1,7 @@
-using IdatFiles
+using IlluminaIdatFiles
 using Test
 
-@testset "IdatFiles.jl" begin
+@testset "IlluminaIdatFiles.jl" begin
 
     @test 1 == 1
 
