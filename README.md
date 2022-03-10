@@ -38,6 +38,7 @@ e.g. 204792200130_R01C01_Grn.idat, 204792200130_R01C01_Red.idat
 ```julia
 using Pkg
 Pkg.add("IlluminaIdatFiles");
+#or from github master:
 #Pkg.add(url="https://github.com/oheil/IlluminaIdatFiles.jl",rev="master")
 
 using IlluminaIdatFiles
